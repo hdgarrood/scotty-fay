@@ -1,0 +1,40 @@
+name:           scotty-fay-server
+version:        0.0.1
+build-type:     Simple
+cabal-version:  >= 1.4
+
+category:       Development, Web, Fay
+maintainer:     Harry Garrood <harry@garrood.me>
+license:        MIT
+license-file:   LICENSE
+
+synopsis:       A Scotty application which compiles and serves Fay source files.
+description:    A Scotty application which compiles and serves Fay source files. For more information, please see <https://github.com/hdgarrood/scotty-fay-server>.
+
+
+-- test-suite scotty-fay-server-tests
+--   type:             exitcode-stdio-1.0
+--   main-is:          TestMain.hs
+--   hs-source-dirs:   test, src/haskell
+--   ghc-options:      -threaded -Wall
+--   build-depends:    base,
+--                     HUnit,
+--                     QuickCheck,
+--                     test-framework,
+--                     test-framework-hunit,
+--                     test-framework-quickcheck2
+--   extensions:       GeneralizedNewtypeDeriving,
+--                     OverloadedStrings,
+--                     DeriveDataTypeable,
+--                     TemplateHaskell,
+--                     TypeSynonymInstances,
+--                     FlexibleInstances
+
+library
+  hs-source-dirs:   src
+  ghc-options:      -Wall
+  exposed-modules:  Web.Scotty.FayServer
+  build-depends:    base >= 4.0 && < 5.0,
+                    scotty >= 0.6.0 && < 0.7.0,
+                    fay
+                    --fay-base
