@@ -8,8 +8,8 @@ maintainer:     Harry Garrood <harry@garrood.me>
 license:        MIT
 license-file:   LICENSE
 
-synopsis:       A Scotty application which compiles and serves Fay source files.
-description:    A Scotty application which compiles and serves Fay source files. For more information, please see <https://github.com/hdgarrood/scotty-fay>.
+synopsis:       Fay integration for Scotty.
+description:    Fay integration for Scotty. For more information, please see <https://github.com/hdgarrood/scotty-fay>.
 
 
 -- test-suite scotty-fay-tests
