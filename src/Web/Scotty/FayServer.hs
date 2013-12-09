@@ -16,9 +16,9 @@ pattern :: RoutePattern
 pattern = function $
     \req -> Just [("path", strictByteStringToLazyText $ rawPathInfo req)]
 
-serveFay :: MonadIO a => ScottyT Text a ()
-serveFay = do
-    get pattern $ do
+serveFay :: MonadIO a => Text -> ScottyT Text a ()
+serveFay base = do
+    get (base `T.append` "/:path") $ do
         -- TODO: security: directory traversal
         path <- param "path"
         result <- liftIO (compileFile config path)
