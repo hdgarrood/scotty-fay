@@ -37,8 +37,8 @@ makeFayPattern base = function $ \req -> do
         safeHead            = listToMaybe
 
         nonEmptyTail []     = Nothing
-        nonEmptyTail [x]    = Nothing
-        nonEmptyTail (x:xs) = Just xs
+        nonEmptyTail [_]    = Nothing
+        nonEmptyTail (_:xs) = Just xs
 
 secureRejoin :: [T.Text] -> Maybe T.Text
 secureRejoin xs = do
