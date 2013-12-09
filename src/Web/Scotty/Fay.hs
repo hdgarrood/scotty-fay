@@ -47,7 +47,9 @@ serveFay base = do
             status notFound404
             text (stringToLazyText msg)
 
-        raiseErr = raise . stringToLazyText
+        raiseErr = raise . wrapInPreTag . stringToLazyText
+
+        wrapInPreTag str = "<pre>" `LT.append` str `LT.append` "</pre>"
 
 route :: T.Text -> Request -> Maybe [Param]
 route base req = do
@@ -91,7 +93,10 @@ maybeParam :: (Functor a, MonadIO a, Parsable b) =>
 maybeParam key = fmap Just (param key) `rescue` (const $ return Nothing)
 
 config :: Fay.CompileConfig
-config = Fay.addConfigDirectoryInclude Nothing "test" def
+config = addIncludeDir "test" def
+
+addIncludeDir :: FilePath -> Fay.CompileConfig -> Fay.CompileConfig
+addIncludeDir = Fay.addConfigDirectoryInclude Nothing
 
 respondWithJs :: MonadIO a => String -> ActionT LT.Text a ()
 respondWithJs jsString = do
