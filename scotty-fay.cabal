@@ -1,7 +1,7 @@
 name:           scotty-fay
 version:        0.0.1
 build-type:     Simple
-cabal-version:  >= 1.4
+cabal-version:  >= 1.10
 
 category:       Development, Web, Fay
 maintainer:     Harry Garrood <harry@garrood.me>
@@ -11,38 +11,38 @@ license-file:   LICENSE
 synopsis:       Fay integration for Scotty.
 description:    Fay integration for Scotty. For more information, please see <https://github.com/hdgarrood/scotty-fay>.
 
+source-repository head
+  type:         git
+  location:     https://github.com/hdgarrood/scotty-fay
 
--- test-suite scotty-fay-tests
---   type:             exitcode-stdio-1.0
---   main-is:          TestMain.hs
---   hs-source-dirs:   test, src/haskell
---   ghc-options:      -threaded -Wall
---   build-depends:    base,
---                     HUnit,
---                     QuickCheck,
---                     test-framework,
---                     test-framework-hunit,
---                     test-framework-quickcheck2
---   extensions:       GeneralizedNewtypeDeriving,
---                     OverloadedStrings,
---                     DeriveDataTypeable,
---                     TemplateHaskell,
---                     TypeSynonymInstances,
---                     FlexibleInstances
+test-suite scotty-fay-tests
+  type:                 exitcode-stdio-1.0
+  main-is:              TestMain.hs
+  hs-source-dirs:       test, src
+  default-language:     Haskell2010
+  ghc-options:          -Wall
+  default-extensions:   OverloadedStrings,
+                        Rank2Types
+  build-depends:        base,
+                        HUnit,
+                        QuickCheck,
+                        test-framework,
+                        test-framework-hunit,
+                        test-framework-quickcheck2
 
 library
-  hs-source-dirs:   src
-  ghc-options:      -Wall
-  extensions:       OverloadedStrings, Rank2Types
-  exposed-modules:  Web.Scotty.Fay
-  other-modules:    Web.Scotty.Fay.Utils
-  build-depends:    base   >= 4.0   && < 5.0,
-                    scotty >= 0.6.0 && < 0.7.0,
-                    fay    >= 0.18  && < 0.19,
-                    fay-jquery,
-                    bytestring,
-                    data-default,
-                    wai,
-                    transformers,
-                    text
-                    --fay-base
+  hs-source-dirs:       src
+  default-language:     Haskell2010
+  ghc-options:          -Wall
+  default-extensions:   OverloadedStrings, Rank2Types
+  exposed-modules:      Web.Scotty.Fay
+  other-modules:        Web.Scotty.Fay.Utils
+  build-depends:        base   >= 4.0   && < 5.0,
+                        scotty >= 0.6.0 && < 0.7.0,
+                        fay    >= 0.18  && < 0.19,
+                        fay-jquery,
+                        bytestring,
+                        data-default,
+                        wai,
+                        transformers,
+                        text
