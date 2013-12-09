@@ -21,6 +21,7 @@ tests :: IO [Test]
 tests = sequence
     [ waiTest "compiles Fay" test_compilesFay
     , waiTest "serveFay captures everything under base" test_capturesEverything
+    , waiTest "imports" test_imports
     ]
 
 waiTest :: String -> Session () -> IO Test
@@ -49,13 +50,17 @@ assertNotStatus i SResponse{simpleStatus = s} = assertBool (concat
     where
         sc = HTTP.statusCode s
 
+assertJavaScriptRenderedOk :: SResponse -> Session ()
+assertJavaScriptRenderedOk response = do
+    assertStatus 200 response
+    assertHeader "Content-Type" "text/javascript" response
+
 test_compilesFay :: Session ()
 test_compilesFay = do
     let req = setPath defaultRequest "/fay/test/Fact.hs"
     resp <- request req
 
-    assertStatus 200 resp
-    assertHeader "Content-Type" "text/javascript" resp
+    assertJavaScriptRenderedOk resp
 
 test_capturesEverything :: Session ()
 test_capturesEverything = do
@@ -63,3 +68,10 @@ test_capturesEverything = do
     resp <- request req
 
     assertNotStatus 200 resp
+
+test_imports :: Session ()
+test_imports = do
+    let req = setPath defaultRequest "/fay/test/Fib.hs"
+    resp <- request req
+
+    assertJavaScriptRenderedOk resp
