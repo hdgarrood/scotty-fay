@@ -1,4 +1,4 @@
-module Web.Scotty.FayServer (serveFay) where
+module Web.Scotty.Fay (serveFay) where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Default
@@ -8,13 +8,6 @@ import Web.Scotty.Trans
 import Fay
 
 import Web.Scotty.FayServer.Utils
-
-config :: CompileConfig
-config = def
-
-pattern :: RoutePattern
-pattern = function $
-    \req -> Just [("path", strictByteStringToLazyText $ rawPathInfo req)]
 
 serveFay :: MonadIO a => Text -> ScottyT Text a ()
 serveFay base = do
@@ -27,6 +20,9 @@ serveFay base = do
             Right (code, _) -> js code
     where
         raiseCompileErr = raise . stringToLazyText . showCompileError
+
+config :: CompileConfig
+config = def
 
 js :: MonadIO a => String -> ActionT Text a ()
 js jsString = do
