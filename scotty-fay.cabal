@@ -1,7 +1,7 @@
 name:           scotty-fay
 version:        0.0.1
 build-type:     Simple
-cabal-version:  >= 1.16
+cabal-version:  >= 1.10
 
 category:       Development, Web, Fay
 maintainer:     Harry Garrood <harry@garrood.me>
@@ -32,20 +32,25 @@ library
                         wai,
                         transformers,
                         text,
-                        filepath,
                         directory
 
 test-suite scotty-fay-tests
   type:                 exitcode-stdio-1.0
   main-is:              TestMain.hs
-  hs-source-dirs:       test, src
+  hs-source-dirs:       test
   default-language:     Haskell2010
   ghc-options:          -Wall
   default-extensions:   OverloadedStrings,
                         Rank2Types
-  build-depends:        wai-test,
+  build-depends:        base,
+                        scotty-fay,
+                        wai-test,
                         test-framework,
                         test-framework-hunit,
                         HUnit,
+                        directory,
+                        wai,
+                        transformers,
                         http-types,
-                        directory
+                        scotty
+

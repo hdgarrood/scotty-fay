@@ -8,10 +8,9 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text as T
 import Network.Wai (pathInfo)
 import Network.HTTP.Types (notFound404)
-import Web.Scotty.Trans
+import Web.Scotty.Trans hiding (file)
 import qualified Fay
 import System.Directory
-import System.FilePath
 
 import Web.Scotty.Fay.Utils
 
@@ -21,10 +20,11 @@ compileFile :: Fay.CompileConfig -> FilePath -> IO CompileResult
 compileFile cfg file = do
     exists <- doesFileExist file
     if not exists
-        then FileNotFound $ "scotty-fay: Could not find " ++ file -- TODO: hs relative path
+        then return . FileNotFound $
+            "scotty-fay: Could not find " ++ file -- TODO: hs relative path
         else do
             file' <- canonicalizePath file
-            res   <- Fay.compileFile config file'
+            res   <- Fay.compileFile cfg file'
             case res of
                 Right (out, _) -> return $ Success out
                 Left err       -> return . Error . Fay.showCompileError $ err
