@@ -32,6 +32,9 @@ app :: ScottyM ()
 app = do
     serveFay "/fay"
 
+    get "/" $ do
+        text "this is the root"
+
     get "/fay/shouldnt-get-here" $ do
         text "it shouldn't get here"
 

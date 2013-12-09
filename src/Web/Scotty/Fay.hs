@@ -6,7 +6,7 @@ import Data.Default
 import Data.Maybe (listToMaybe, maybeToList)
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text as T
-import Network.Wai (pathInfo)
+import Network.Wai (pathInfo, Request)
 import Network.HTTP.Types (notFound404)
 import Web.Scotty.Trans hiding (file)
 import qualified Fay
@@ -18,12 +18,12 @@ data CompileResult = Success String | Error String | FileNotFound String
 
 compileFile :: Fay.CompileConfig -> FilePath -> IO CompileResult
 compileFile cfg file = do
-    file' <- canonicalizePath file
-    exists <- doesFileExist file'
+    exists <- doesFileExist file
     if not exists
         then return . FileNotFound $
-            "scotty-fay: Could not find " ++ file' -- TODO: hs relative path?
+            "scotty-fay: Could not find " ++ file -- TODO: hs relative path?
         else do
+            file' <- canonicalizePath file
             res <- Fay.compileFile cfg file'
             case res of
                 Right (out, _) -> return $ Success out
@@ -31,7 +31,7 @@ compileFile cfg file = do
 
 serveFay :: (MonadIO a, Functor a) => T.Text -> ScottyT LT.Text a ()
 serveFay base = do
-    get (makePattern base) $ do
+    get (pattern base) $ do
         path <- maybeParam "filePath"
         case path of
             Just p -> do
@@ -48,13 +48,14 @@ serveFay base = do
 
         raiseErr = raise . stringToLazyText
 
-makePattern :: T.Text -> RoutePattern
-makePattern base = function $ \req -> do
+route :: T.Text -> Request -> Maybe [Param]
+route base req = do
+    base' <- eatFromStart "/" base
     let pathSegments = pathInfo req
     first <- safeHead pathSegments
     rest  <- nonEmptyTail pathSegments
 
-    guard (first == base)
+    guard (first == base')
     return . maybeToList . makeParam $ rest
     where
         safeHead            = listToMaybe
@@ -62,6 +63,15 @@ makePattern base = function $ \req -> do
         nonEmptyTail []     = Nothing
         nonEmptyTail [_]    = Nothing
         nonEmptyTail (_:xs) = Just xs
+
+pattern :: T.Text -> RoutePattern
+pattern = function . route
+
+eatFromStart :: T.Text -> T.Text -> Maybe T.Text
+eatFromStart prefix str =
+    if prefix `T.isPrefixOf` str
+        then Just $ T.drop (T.length prefix) str
+        else Nothing
 
 makeParam :: [T.Text] -> Maybe (LT.Text, LT.Text)
 makeParam = fmap (\p -> ("filePath", LT.fromStrict p)) . secureRejoin
