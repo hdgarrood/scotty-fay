@@ -1,9 +1,9 @@
-module Web.Scotty.Fay (serveFay) where
+module Web.Scotty.Fay  where
 
 import Control.Monad (guard)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Default
-import Data.Maybe (listToMaybe)
+import Data.Maybe (listToMaybe, maybeToList)
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text as T
 import Network.Wai (pathInfo)
@@ -18,26 +18,29 @@ data CompileResult = Success String | Error String | FileNotFound String
 
 compileFile :: Fay.CompileConfig -> FilePath -> IO CompileResult
 compileFile cfg file = do
-    exists <- doesFileExist file
+    file' <- canonicalizePath file
+    exists <- doesFileExist file'
     if not exists
         then return . FileNotFound $
-            "scotty-fay: Could not find " ++ file -- TODO: hs relative path
+            "scotty-fay: Could not find " ++ file' -- TODO: hs relative path?
         else do
-            file' <- canonicalizePath file
-            res   <- Fay.compileFile cfg file'
+            res <- Fay.compileFile cfg file'
             case res of
                 Right (out, _) -> return $ Success out
                 Left err       -> return . Error . Fay.showCompileError $ err
 
-serveFay :: MonadIO a => T.Text -> ScottyT LT.Text a ()
+serveFay :: (MonadIO a, Functor a) => T.Text -> ScottyT LT.Text a ()
 serveFay base = do
-    get (makeFayPattern base) $ do
-        path <- param "filePath"
-        result <- liftIO (compileFile config path)
-        case result of
-            Success code     -> respondWithJs code
-            Error err        -> raiseErr err
-            FileNotFound msg -> notFoundMsg msg
+    get (makePattern base) $ do
+        path <- maybeParam "filePath"
+        case path of
+            Just p -> do
+                result <- liftIO (compileFile config p)
+                case result of
+                    Success code     -> respondWithJs code
+                    Error err        -> raiseErr err
+                    FileNotFound msg -> notFoundMsg msg
+            Nothing -> notFoundMsg "scotty-fay: requested path is invalid"
     where
         notFoundMsg msg = do
             status notFound404
@@ -45,22 +48,23 @@ serveFay base = do
 
         raiseErr = raise . stringToLazyText
 
-makeFayPattern :: T.Text -> RoutePattern
-makeFayPattern base = function $ \req -> do
+makePattern :: T.Text -> RoutePattern
+makePattern base = function $ \req -> do
     let pathSegments = pathInfo req
     first <- safeHead pathSegments
     rest  <- nonEmptyTail pathSegments
 
     guard (first == base)
-    filePath <- secureRejoin rest
-
-    return [("filePath", LT.fromStrict filePath)]
+    return . maybeToList . makeParam $ rest
     where
         safeHead            = listToMaybe
 
         nonEmptyTail []     = Nothing
         nonEmptyTail [_]    = Nothing
         nonEmptyTail (_:xs) = Just xs
+
+makeParam :: [T.Text] -> Maybe (LT.Text, LT.Text)
+makeParam = fmap (\p -> ("filePath", LT.fromStrict p)) . secureRejoin
 
 -- Rejoin path segments to get a file path, while preventing directory
 -- traversal attacks.
@@ -70,6 +74,10 @@ secureRejoin xs = do
     return $ T.intercalate "/" xs
     where
         noDots = not . elem ".."
+
+maybeParam :: (Functor a, MonadIO a, Parsable b) =>
+              LT.Text -> ActionT LT.Text a (Maybe b)
+maybeParam key = fmap Just (param key) `rescue` (const $ return Nothing)
 
 config :: Fay.CompileConfig
 config = def
