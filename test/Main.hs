@@ -51,7 +51,7 @@ assertNotStatus i SResponse{simpleStatus = s} = assertBool (concat
 
 test_compilesFay :: Session ()
 test_compilesFay = do
-    let req = setPath defaultRequest "/fay/test/Fib.hs"
+    let req = setPath defaultRequest "/fay/test/Fact.hs"
     resp <- request req
 
     assertStatus 200 resp

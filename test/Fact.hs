@@ -1,4 +1,4 @@
-module Fib where
+module Fact where
 
 -- A near-trivial Fay module for testing scotty-fay
 

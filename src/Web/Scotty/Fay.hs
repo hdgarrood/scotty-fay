@@ -10,6 +10,7 @@ import Network.Wai (pathInfo, Request)
 import Network.HTTP.Types (notFound404)
 import Web.Scotty.Trans hiding (file)
 import qualified Fay
+import qualified Fay.Compiler.Config as Fay
 import System.Directory
 
 import Web.Scotty.Fay.Utils
@@ -90,7 +91,7 @@ maybeParam :: (Functor a, MonadIO a, Parsable b) =>
 maybeParam key = fmap Just (param key) `rescue` (const $ return Nothing)
 
 config :: Fay.CompileConfig
-config = def
+config = Fay.addConfigDirectoryInclude Nothing "test" def
 
 respondWithJs :: MonadIO a => String -> ActionT LT.Text a ()
 respondWithJs jsString = do
