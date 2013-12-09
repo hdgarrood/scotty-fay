@@ -3,15 +3,14 @@ module Web.Scotty.Fay (serveFay) where
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Default
 import Data.Text.Lazy (Text)
-import Network.Wai
 import Web.Scotty.Trans
 import Fay
 
-import Web.Scotty.FayServer.Utils
+import Web.Scotty.Fay.Utils
 
-serveFay :: MonadIO a => Text -> ScottyT Text a ()
+serveFay :: MonadIO a => String -> ScottyT Text a ()
 serveFay base = do
-    get (base `T.append` "/:path") $ do
+    get (capture $ base ++ "/:path") $ do
         -- TODO: security: directory traversal
         path <- param "path"
         result <- liftIO (compileFile config path)

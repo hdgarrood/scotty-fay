@@ -1,4 +1,4 @@
-module Web.Scotty.FayServer.Utils where
+module Web.Scotty.Fay.Utils where
 
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString.Lazy.Char8 as LBC8
