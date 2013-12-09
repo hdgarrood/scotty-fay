@@ -7,10 +7,27 @@ import Data.Maybe (listToMaybe)
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text as T
 import Network.Wai (pathInfo)
+import Network.HTTP.Types (notFound404)
 import Web.Scotty.Trans
-import Fay
+import qualified Fay
+import System.Directory
+import System.FilePath
 
 import Web.Scotty.Fay.Utils
+
+data CompileResult = Success String | Error String | FileNotFound String
+
+compileFile :: Fay.CompileConfig -> FilePath -> IO CompileResult
+compileFile cfg file = do
+    exists <- doesFileExist file
+    if not exists
+        then FileNotFound $ "scotty-fay: Could not find " ++ file -- TODO: hs relative path
+        else do
+            file' <- canonicalizePath file
+            res   <- Fay.compileFile config file'
+            case res of
+                Right (out, _) -> return $ Success out
+                Left err       -> return . Error . Fay.showCompileError $ err
 
 serveFay :: MonadIO a => T.Text -> ScottyT LT.Text a ()
 serveFay base = do
@@ -18,10 +35,15 @@ serveFay base = do
         path <- param "filePath"
         result <- liftIO (compileFile config path)
         case result of
-            Left err        -> raiseCompileErr err
-            Right (code, _) -> js code
+            Success code     -> respondWithJs code
+            Error err        -> raiseErr err
+            FileNotFound msg -> notFoundMsg msg
     where
-        raiseCompileErr = raise . stringToLazyText . showCompileError
+        notFoundMsg msg = do
+            status notFound404
+            text (stringToLazyText msg)
+
+        raiseErr = raise . stringToLazyText
 
 makeFayPattern :: T.Text -> RoutePattern
 makeFayPattern base = function $ \req -> do
@@ -40,6 +62,8 @@ makeFayPattern base = function $ \req -> do
         nonEmptyTail [_]    = Nothing
         nonEmptyTail (_:xs) = Just xs
 
+-- Rejoin path segments to get a file path, while preventing directory
+-- traversal attacks.
 secureRejoin :: [T.Text] -> Maybe T.Text
 secureRejoin xs = do
     guard (noDots xs)
@@ -47,10 +71,10 @@ secureRejoin xs = do
     where
         noDots = not . elem ".."
 
-config :: CompileConfig
+config :: Fay.CompileConfig
 config = def
 
-js :: MonadIO a => String -> ActionT LT.Text a ()
-js jsString = do
+respondWithJs :: MonadIO a => String -> ActionT LT.Text a ()
+respondWithJs jsString = do
     setHeader "Content-Type" "text/javascript"
     raw $ stringToLazyByteString jsString

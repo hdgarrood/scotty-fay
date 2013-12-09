@@ -1,7 +1,7 @@
 name:           scotty-fay
 version:        0.0.1
 build-type:     Simple
-cabal-version:  >= 1.10
+cabal-version:  >= 1.16
 
 category:       Development, Web, Fay
 maintainer:     Harry Garrood <harry@garrood.me>
@@ -28,9 +28,12 @@ library
                         fay-jquery,
                         bytestring,
                         data-default,
+                        http-types,
                         wai,
                         transformers,
-                        text
+                        text,
+                        filepath,
+                        directory
 
 test-suite scotty-fay-tests
   type:                 exitcode-stdio-1.0
@@ -40,17 +43,7 @@ test-suite scotty-fay-tests
   ghc-options:          -Wall
   default-extensions:   OverloadedStrings,
                         Rank2Types
-  build-depends:        base   >= 4.0   && < 5.0,
-                        scotty >= 0.6.0 && < 0.7.0,
-                        fay    >= 0.18  && < 0.19,
-                        fay-jquery,
-                        bytestring,
-                        data-default,
-                        wai,
-                        transformers,
-                        text,
-                        wai,
-                        wai-test,
+  build-depends:        wai-test,
                         test-framework,
                         test-framework-hunit,
                         HUnit,
