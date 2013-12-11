@@ -25,16 +25,6 @@ instance Default Config where
         , configSrcDir   = ""
         }
 
--- | A composable way of specifying how scotty-fay should be configured. The
--- | user supplies a ConfigBuilder like so:
--- | 
--- | myConfig :: ConfigBuilder
--- | myConfig = under "/fay" . from "src/fay"
--- |
--- | The resulting function is applied to the default instance for Config to
--- | build the actual configuration.
--- |
--- | If you're boring, you can just use serveFay' and supply a Config yourself.
 type ConfigBuilder = Config -> Config
 
 buildConfig :: ConfigBuilder -> Config
