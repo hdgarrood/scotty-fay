@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+import qualified Data.Text.Lazy as T
 import Web.Scotty
 import Web.Scotty.Fay
 
@@ -12,4 +13,12 @@ main = scotty 3000 $ do
         from "src/fay"
 
     get "/" $ do
-        html "<script type=text/javascript src=/scotty-fay/HelloWorld.hs>"
+        let (+>) = T.append -- just to make it shorter
+        html $
+            "<!doctype html>" +>
+            "<html>" +>
+            "<head>" +>
+            "<script type=text/javascript src=/scotty-fay/HelloWorld.hs></script>" +>
+            "</head>" +>
+            "<body><h1>lol</h1></body>" +>
+            "</html>"
