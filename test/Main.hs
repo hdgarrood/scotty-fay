@@ -22,6 +22,7 @@ tests = sequence
     [ waiTest "compiles Fay" test_compilesFay
     , waiTest "serveFay captures everything under base" test_capturesEverything
     , waiTest "imports" test_imports
+    , waiTest "directory traversal" test_directoryTraversal
     ]
 
 waiTest :: String -> Session () -> IO Test
@@ -31,13 +32,17 @@ waiTest name session = do
 
 app :: ScottyM ()
 app = do
-    serveFay "/fay"
+    serveFay (under "/fay" . from "test")
 
     get "/" $ do
         text "this is the root"
 
     get "/fay/shouldnt-get-here" $ do
         text "it shouldn't get here"
+
+-- This is handy to have when debugging interactively.
+runScottyApp :: IO ()
+runScottyApp = scotty 3000 app
 
 assertBool :: String -> Bool -> Session ()
 assertBool str p = liftIO $ H.assertBool str p
@@ -75,3 +80,10 @@ test_imports = do
     resp <- request req
 
     assertJavaScriptRenderedOk resp
+
+test_directoryTraversal :: Session ()
+test_directoryTraversal = do
+    let req = setPath defaultRequest "/fay/test/Fib/../Fib.hs"
+    resp <- request req
+
+    assertNotStatus 200 resp

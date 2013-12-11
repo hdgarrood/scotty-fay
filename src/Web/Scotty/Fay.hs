@@ -1,104 +1,51 @@
-module Web.Scotty.Fay  where
+module Web.Scotty.Fay
+    ( module Web.Scotty.Fay.Config
+    , compileFile
+    , serveFay
+    , serveFay'
+    ) where
 
-import Control.Monad (guard)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Data.Default
-import Data.Maybe (listToMaybe, maybeToList)
 import qualified Data.Text.Lazy as LT
-import qualified Data.Text as T
-import Network.Wai (pathInfo, Request)
-import Network.HTTP.Types (notFound404)
 import Web.Scotty.Trans hiding (file)
 import qualified Fay
-import qualified Fay.Compiler.Config as Fay
 import System.Directory
 
-import Web.Scotty.Fay.Utils
+import Web.Scotty.Fay.Internal
+import Web.Scotty.Fay.Config
 
-data CompileResult = Success String | Error String | FileNotFound String
+data CompileResult = Success String
+                   | Error String
+                   | FileNotFound String
 
-compileFile :: Fay.CompileConfig -> FilePath -> IO CompileResult
-compileFile cfg file = do
+compileFile :: Config -> FilePath -> IO CompileResult
+compileFile conf file = do
     exists <- doesFileExist file
     if not exists
         then return . FileNotFound $
             "scotty-fay: Could not find " ++ file -- TODO: hs relative path?
         else do
             file' <- canonicalizePath file
-            res <- Fay.compileFile cfg file'
+            res <- Fay.compileFile (toFay conf) file'
             case res of
                 Right (out, _) -> return $ Success out
                 Left err       -> return . Error . Fay.showCompileError $ err
 
-serveFay :: (MonadIO a, Functor a) => T.Text -> ScottyT LT.Text a ()
-serveFay base = do
-    get (pattern base) $ do
+serveFay :: (MonadIO a, Functor a) => ConfigBuilder -> ScottyT LT.Text a ()
+serveFay = serveFay' . buildConfig
+
+serveFay' :: (MonadIO a, Functor a) => Config -> ScottyT LT.Text a ()
+serveFay' conf = do
+    liftIO $ initialize conf
+
+    get (pattern $ configBasePath conf) $ do
         path <- maybeParam "filePath"
         case path of
             Just p -> do
-                result <- liftIO (compileFile config p)
+                result <- liftIO (compileFile conf p)
                 case result of
                     Success code     -> respondWithJs code
                     Error err        -> raiseErr err
                     FileNotFound msg -> notFoundMsg msg
             Nothing -> notFoundMsg "scotty-fay: requested path is invalid"
     where
-        notFoundMsg msg = do
-            status notFound404
-            text (stringToLazyText msg)
-
-        raiseErr = raise . wrapInPreTag . stringToLazyText
-
-        wrapInPreTag str = "<pre>" `LT.append` str `LT.append` "</pre>"
-
-route :: T.Text -> Request -> Maybe [Param]
-route base req = do
-    base' <- eatFromStart "/" base
-    let pathSegments = pathInfo req
-    first <- safeHead pathSegments
-    rest  <- nonEmptyTail pathSegments
-
-    guard (first == base')
-    return . maybeToList . makeParam $ rest
-    where
-        safeHead            = listToMaybe
-
-        nonEmptyTail []     = Nothing
-        nonEmptyTail [_]    = Nothing
-        nonEmptyTail (_:xs) = Just xs
-
-pattern :: T.Text -> RoutePattern
-pattern = function . route
-
-eatFromStart :: T.Text -> T.Text -> Maybe T.Text
-eatFromStart prefix str =
-    if prefix `T.isPrefixOf` str
-        then Just $ T.drop (T.length prefix) str
-        else Nothing
-
-makeParam :: [T.Text] -> Maybe (LT.Text, LT.Text)
-makeParam = fmap (\p -> ("filePath", LT.fromStrict p)) . secureRejoin
-
--- Rejoin path segments to get a file path, while preventing directory
--- traversal attacks.
-secureRejoin :: [T.Text] -> Maybe T.Text
-secureRejoin xs = do
-    guard (noDots xs)
-    return $ T.intercalate "/" xs
-    where
-        noDots = not . elem ".."
-
-maybeParam :: (Functor a, MonadIO a, Parsable b) =>
-              LT.Text -> ActionT LT.Text a (Maybe b)
-maybeParam key = fmap Just (param key) `rescue` (const $ return Nothing)
-
-config :: Fay.CompileConfig
-config = addIncludeDir "test" def
-
-addIncludeDir :: FilePath -> Fay.CompileConfig -> Fay.CompileConfig
-addIncludeDir = Fay.addConfigDirectoryInclude Nothing
-
-respondWithJs :: MonadIO a => String -> ActionT LT.Text a ()
-respondWithJs jsString = do
-    setHeader "Content-Type" "text/javascript"
-    raw $ stringToLazyByteString jsString
