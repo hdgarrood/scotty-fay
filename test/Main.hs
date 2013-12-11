@@ -36,7 +36,7 @@ waiTest name session = do
 
 app :: ScottyM ()
 app = do
-    serveFay (under "/fay" . from "test")
+    serveFay (under "/fay" . from "test/fay-resources")
 
     get "/" $ do
         text "this is the root"
@@ -66,7 +66,7 @@ assertJavaScriptRenderedOk response = do
 
 test_compilesFay :: Session ()
 test_compilesFay = do
-    let req = setPath defaultRequest "/fay/test/Fact.hs"
+    let req = setPath defaultRequest "/fay/Fact.hs"
     resp <- request req
 
     assertJavaScriptRenderedOk resp
@@ -80,7 +80,7 @@ test_capturesEverything = do
 
 test_imports :: Session ()
 test_imports = do
-    let req = setPath defaultRequest "/fay/test/Fib.hs"
+    let req = setPath defaultRequest "/fay/Fib.hs"
     resp <- request req
 
     assertJavaScriptRenderedOk resp

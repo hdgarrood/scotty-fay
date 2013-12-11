@@ -39,10 +39,11 @@ serveFay' conf = do
     liftIO $ initialize conf
 
     get (pattern $ configBasePath conf) $ do
-        path <- maybeParam "filePath"
+        path <- maybeParam "path"
         case path of
-            Just p -> do
-                result <- liftIO (compileFile conf p)
+            Just path' -> do
+                let filePath = configSrcDir conf ++ "/" ++ path'
+                result <- liftIO (compileFile conf filePath)
                 case result of
                     Success code     -> respondWithJs code
                     Error err        -> raiseErr err

@@ -58,7 +58,7 @@ eatFromStart prefix str =
         else Nothing
 
 makeParam :: [T.Text] -> Maybe (LT.Text, LT.Text)
-makeParam = fmap (\p -> ("filePath", LT.fromStrict p)) . secureRejoin
+makeParam = fmap (\p -> ("path", LT.fromStrict p)) . secureRejoin
 
 -- Rejoin path segments to get a file path, while preventing directory
 -- traversal attacks.
