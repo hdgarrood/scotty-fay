@@ -7,6 +7,10 @@ category:       Development, Web, Fay
 maintainer:     Harry Garrood <harry@garrood.me>
 license:        MIT
 license-file:   LICENSE
+extra-source-files:
+    README.md
+    example/Main.hs
+    example/src/fay/HelloWorld.hs
 
 synopsis:       Fay integration for Scotty.
 description:    Fay integration for Scotty. For more information, please see <https://github.com/hdgarrood/scotty-fay>.
