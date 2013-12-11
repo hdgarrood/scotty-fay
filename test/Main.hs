@@ -23,6 +23,10 @@ tests = sequence
     , waiTest "serveFay captures everything under base" test_capturesEverything
     , waiTest "imports" test_imports
     , waiTest "directory traversal" test_directoryTraversal
+    , return $ testGroup "configuration" $
+        [ testCase "configuring src dir" test_configuringSrcDir
+        , testCase "configuring base path" test_configuringBasePath
+        ]
     ]
 
 waiTest :: String -> Session () -> IO Test
@@ -87,3 +91,16 @@ test_directoryTraversal = do
     resp <- request req
 
     assertNotStatus 200 resp
+
+assertEq :: (Eq a, Show a) => a -> a -> H.Assertion
+assertEq = H.assertEqual ""
+
+test_configuringSrcDir :: H.Assertion
+test_configuringSrcDir =
+    assertEq "src" $
+        (configSrcDir . buildConfig $ (under "/js" . from "src"))
+
+test_configuringBasePath :: H.Assertion
+test_configuringBasePath =
+    assertEq "/js" $
+        (configBasePath . buildConfig $ (under "/js" . from "src"))
