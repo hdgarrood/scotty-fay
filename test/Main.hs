@@ -1,5 +1,6 @@
 module Main where
 
+import Data.List
 import Control.Monad.IO.Class (liftIO)
 import Web.Scotty hiding (request)
 import Web.Scotty.Fay
@@ -24,7 +25,7 @@ tests = sequence
     , waiTest "imports" test_imports
     , waiTest "directory traversal" test_directoryTraversal
     , return $ testGroup "configuration" $
-        [ testCase "configuring src dir" test_configuringSrcDir
+        [ testCase "configuring include dirs" test_configuringIncludeDirs
         , testCase "configuring base path" test_configuringBasePath
         ]
     ]
@@ -36,7 +37,10 @@ waiTest name session = do
 
 app :: ScottyM ()
 app = do
-    serveFay (under "/fay" . from "test/fay-resources")
+    serveFay $
+        ( under "/fay"
+        . fromDirs ["test/fay-resources1", "test/fay-resources2"]
+        )
 
     get "/" $ do
         text "this is the root"
@@ -87,18 +91,36 @@ test_imports = do
 
 test_directoryTraversal :: Session ()
 test_directoryTraversal = do
-    let req = setPath defaultRequest "/fay/test/Fib/../Fib.hs"
+    let req = setPath defaultRequest "/fay/Fib/../Fib.hs"
     resp <- request req
 
     assertNotStatus 200 resp
 
+test_multipleIncludeDirs :: Session ()
+test_multipleIncludeDirs = do
+    let req = setPath defaultRequest "/fay/HelloWorld.hs"
+    resp <- request req
+
+    assertJavaScriptRenderedOk resp
+
+test_fayUnderDirectories :: Session ()
+test_fayUnderDirectories = do
+    let req = setPath defaultRequest "/fay/under-a-dir/HelloWorldAgain.hs"
+    resp <- request req
+
+    assertJavaScriptRenderedOk resp
+
 assertEq :: (Eq a, Show a) => a -> a -> H.Assertion
 assertEq = H.assertEqual ""
 
-test_configuringSrcDir :: H.Assertion
-test_configuringSrcDir =
-    assertEq "src" $
-        (configSrcDir . buildConfig $ (under "/js" . from "src"))
+assertSameElems :: (Ord a, Eq a, Show a) => [a] -> [a] -> H.Assertion
+assertSameElems xs ys = assertEq (sort xs) (sort ys)
+
+test_configuringIncludeDirs :: H.Assertion
+test_configuringIncludeDirs =
+    assertSameElems ["src", "src2", "src3"] $
+        (configIncludeDirs . buildConfig $
+            (under "/js" . from "src" . fromDirs ["src3", "src2"]))
 
 test_configuringBasePath :: H.Assertion
 test_configuringBasePath =
