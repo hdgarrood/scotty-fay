@@ -1,5 +1,5 @@
 name:           scotty-fay
-version:        0.0.1
+version:        0.0.2
 build-type:     Simple
 cabal-version:  >= 1.10
 
@@ -38,7 +38,8 @@ library
                         wai,
                         transformers,
                         text,
-                        directory
+                        directory,
+                        filepath
 
 test-suite scotty-fay-tests
   type:                 exitcode-stdio-1.0

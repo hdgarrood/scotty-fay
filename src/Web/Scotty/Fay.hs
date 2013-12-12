@@ -10,6 +10,7 @@ import qualified Data.Text.Lazy as LT
 import Web.Scotty.Trans hiding (file)
 import qualified Fay
 import System.Directory
+import System.FilePath
 
 import Web.Scotty.Fay.Internal
 import Web.Scotty.Fay.Config
@@ -19,14 +20,15 @@ data CompileResult = Success String
                    | FileNotFound String
 
 compileFile :: Config -> FilePath -> IO CompileResult
-compileFile conf file = do
-    exists <- doesFileExist file
-    if not exists
-        then return . FileNotFound $
+compileFile conf fullPath = do
+    let (dir, file) = splitFileName fullPath
+    let includeDirs = map (dir </>) $ configIncludeDirs conf
+    file' <- findFile includeDirs file
+    case file' of
+        Nothing     -> return . FileNotFound $
             "scotty-fay: Could not find " ++ file -- TODO: hs relative path?
-        else do
-            file' <- canonicalizePath file
-            res <- Fay.compileFile (toFay conf) file'
+        Just file'' -> do
+            res <- Fay.compileFile (toFay conf) file''
             case res of
                 Right (out, _) -> return $ Success out
                 Left err       -> return . Error . Fay.showCompileError $ err
@@ -42,8 +44,7 @@ serveFay' conf = do
         path <- maybeParam "path"
         case path of
             Just path' -> do
-                let filePath = configSrcDir conf ++ "/" ++ path'
-                result <- liftIO (compileFile conf filePath)
+                result <- liftIO (compileFile conf path')
                 case result of
                     Success code     -> respondWithJs code
                     Error err        -> raiseErr err

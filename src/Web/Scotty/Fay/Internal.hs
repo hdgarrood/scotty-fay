@@ -2,6 +2,7 @@ module Web.Scotty.Fay.Internal where
 
 import Control.Monad
 import Control.Monad.IO.Class
+import Data.List
 import Data.Maybe
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as LT
@@ -23,11 +24,27 @@ warn = putStrLn . ("scotty-fay: " ++)
 -- is sane.
 initialize :: Config -> IO ()
 initialize conf = do
-    let srcDir = configSrcDir conf
-    exists <- doesDirectoryExist srcDir
-    unless exists $ do
-        warn $ "The source directory: " ++ show srcDir ++
-                " does not exist. Continuing anyway..."
+    let includeDirs = configIncludeDirs conf
+    results <- getNonExistent includeDirs
+    warn $ nonExistentWarning results
+
+getNonExistent :: [FilePath] -> IO [FilePath]
+getNonExistent = foldl f (return [])
+    where
+        f acc dir = do
+            dirs <- acc
+            exists <- doesDirectoryExist dir
+            if exists
+                then return (dir : dirs)
+                else return dirs
+
+nonExistentWarning :: [FilePath] -> String
+nonExistentWarning dirs = concat
+    [ "The following include dirs:"
+    , showAll dirs
+    , "do not exist. scotty-fay might not work very well."
+    ]
+    where showAll = concat . intersperse "\n\t"
 
 -- The route matcher function, to be given to Scotty. Ensure the request path
 -- starts with the given base path, and then put the rest of the path into
