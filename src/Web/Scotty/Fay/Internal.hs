@@ -26,7 +26,8 @@ initialize :: Config -> IO ()
 initialize conf = do
     let includeDirs = configIncludeDirs conf
     results <- getNonExistent includeDirs
-    warn $ nonExistentWarning results
+    when (not . null $ results) $
+        warn (nonExistentWarning results)
 
 getNonExistent :: [FilePath] -> IO [FilePath]
 getNonExistent = foldl f (return [])
