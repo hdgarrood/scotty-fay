@@ -12,6 +12,8 @@ import Test.Framework.Providers.HUnit
 import qualified Test.HUnit.Base as H
 import System.Directory
 
+import Web.Scotty.Fay.Internal
+
 main :: IO ()
 main = do
     dir <- getCurrentDirectory
@@ -126,3 +128,8 @@ test_configuringBasePath :: H.Assertion
 test_configuringBasePath =
     assertEq "/js" $
         (configBasePath . buildConfig $ (under "/js" . from "src"))
+
+test_getNonExistent :: H.Assertion
+test_getNonExistent = do
+    results <- getNonExistent ["non-existent2", "non-existent1", "src"]
+    assertSameElems ["non-existent1", "non-existent2"] results

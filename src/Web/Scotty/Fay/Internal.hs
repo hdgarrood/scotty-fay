@@ -34,15 +34,15 @@ getNonExistent = foldl f (return [])
         f acc dir = do
             dirs <- acc
             exists <- doesDirectoryExist dir
-            if exists
+            if not exists
                 then return (dir : dirs)
                 else return dirs
 
 nonExistentWarning :: [FilePath] -> String
 nonExistentWarning dirs = concat
-    [ "The following include dirs:"
+    [ "The following include dirs:\n\t"
     , showAll dirs
-    , "do not exist. scotty-fay might not work very well."
+    , "\ndo not exist. scotty-fay might not work very well."
     ]
     where showAll = concat . intersperse "\n\t"
 

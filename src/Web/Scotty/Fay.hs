@@ -1,6 +1,5 @@
 module Web.Scotty.Fay
     ( module Web.Scotty.Fay.Config
-    , compileFile
     , serveFay
     , serveFay'
     ) where
@@ -50,4 +49,3 @@ serveFay' conf = do
                     Error err        -> raiseErr err
                     FileNotFound msg -> notFoundMsg msg
             Nothing -> notFoundMsg "scotty-fay: requested path is invalid"
-    where
