@@ -1,4 +1,3 @@
--- src/fay/HelloWorld.hs
 module HelloWorld where
 
 import Prelude
