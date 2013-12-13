@@ -23,6 +23,7 @@ main = do
 tests :: IO [Test]
 tests = sequence
     [ waiTest "compiles Fay" test_compilesFay
+    , waiTest "can use fay packages" test_usingPackages
     , waiTest "serveFay captures everything under base" test_capturesEverything
     , waiTest "imports" test_imports
     , waiTest "directory traversal" test_directoryTraversal
@@ -42,6 +43,7 @@ app = do
     serveFay $
         ( under "/fay"
         . fromDirs ["test/fay-resources1", "test/fay-resources2"]
+        . withPackages ["fay-text", "fay-jquery"]
         )
 
     get "/" $ do
@@ -52,7 +54,7 @@ app = do
 
 -- This is handy to have when debugging interactively.
 runScottyApp :: IO ()
-runScottyApp = scotty 3000 app
+runScottyApp = scotty 3001 app
 
 assertBool :: String -> Bool -> Session ()
 assertBool str p = liftIO $ H.assertBool str p
@@ -133,3 +135,10 @@ test_getNonExistent :: H.Assertion
 test_getNonExistent = do
     results <- getNonExistent ["non-existent2", "non-existent1", "src"]
     assertSameElems ["non-existent1", "non-existent2"] results
+
+test_usingPackages :: Session ()
+test_usingPackages = do
+    let req = setPath defaultRequest "/fay/TestJQuery.hs"
+    resp <- request req
+
+    assertJavaScriptRenderedOk resp

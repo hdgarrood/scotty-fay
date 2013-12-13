@@ -8,12 +8,14 @@ import qualified Fay.Compiler.Config as Fay
 data Config = Config
     { configBasePath    :: T.Text
     , configIncludeDirs :: [FilePath]
+    , configPackages    :: [String]
     }
 
 instance Default Config where
     def = Config
         { configBasePath    = ""
         , configIncludeDirs = []
+        , configPackages    = []
         }
 
 type ConfigBuilder = Config -> Config
@@ -23,7 +25,9 @@ buildConfig f = f def
 
 -- Convert a scotty-fay Config to a Fay CompileConfig
 toFay :: Config -> Fay.CompileConfig
-toFay conf = Fay.addConfigDirectoryIncludePaths (configIncludeDirs conf) $ def
+toFay conf = Fay.addConfigDirectoryIncludePaths (configIncludeDirs conf) .
+    Fay.addConfigPackages (configPackages conf) $
+    def
 
 under :: T.Text -> ConfigBuilder
 under basePath conf = conf { configBasePath = basePath }
@@ -34,3 +38,10 @@ from dir = fromDirs [dir]
 fromDirs :: [FilePath] -> ConfigBuilder
 fromDirs dirs conf =
     conf { configIncludeDirs = dirs ++ configIncludeDirs conf }
+
+withPackage :: String -> ConfigBuilder
+withPackage pkg = withPackages [pkg]
+
+withPackages :: [String] -> ConfigBuilder
+withPackages pkgs conf =
+    conf { configPackages = pkgs ++ configPackages conf }
