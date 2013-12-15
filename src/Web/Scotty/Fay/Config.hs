@@ -27,7 +27,7 @@ buildConfig f = f def
 toFay :: Config -> Fay.CompileConfig
 toFay conf = Fay.addConfigDirectoryIncludePaths (configIncludeDirs conf) .
     Fay.addConfigPackages (configPackages conf) $
-    def
+    def { Fay.configPrettyPrint = True }
 
 under :: T.Text -> ConfigBuilder
 under basePath conf = conf { configBasePath = basePath }
